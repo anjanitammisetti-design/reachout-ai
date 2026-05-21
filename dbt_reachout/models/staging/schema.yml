@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: stg_jobs
+    description: Cleaned and tagged job postings from raw ingestion
+    columns:
+      - name: job_id
+        description: Unique identifier for each job
+        tests:
+          - unique
+          - not_null
+      - name: title
+        description: Job title
+        tests:
+          - not_null
+      - name: company
+        description: Company name
+        tests:
+          - not_null
+      - name: location_clean
+        description: Normalised location
+      - name: mentions_gcp
+        description: True if job mentions GCP or BigQuery
+      - name: mentions_airflow
+        description: True if job mentions Airflow
+      - name: mentions_dbt
+        description: True if job mentions dbt
+      - name: mentions_python
+        description: True if job mentions Python
+      - name: mentions_ai
+        description: True if job mentions AI or ML

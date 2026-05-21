@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: reachout
+    database: reachout-ai-496806
+    schema: reachout
+    tables:
+      - name: raw_jobs
+        description: Raw job descriptions loaded by the ingestion pipeline
+      - name: outreach_log
+        description: Outreach messages sent to recruiters
+      - name: ats_scores
+        description: ATS match scores per job per resume version
+      - name: tailored_resumes
+        description: Tailored resume versions generated per role
+      - name: interview_prep
+        description: Interview questions and answers generated per role
