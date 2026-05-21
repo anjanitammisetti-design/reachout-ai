@@ -73,24 +73,14 @@ def insert_job(job: dict):
 if __name__ == "__main__":
     print("=== ReachOut AI — Job Description Ingester ===\n")
 
-    choice = input("Do you have a URL? (y/n): ").strip().lower()
+    url = input("Paste the job URL: ").strip()
 
-    if choice == "y":
-        url = input("Paste the job URL: ").strip()
-        job = parse_jd(url=url, source="seek")
-    else:
-        print("\nPaste the job description into 'job_temp.txt'")
-        print("Save the file then press Enter here to continue...")
-        input()
+    if not url:
+        print("No URL provided. Exiting.")
+        exit()
 
-        with open("job_temp.txt", "r", encoding="utf-8") as f:
-            raw_text = f.read().strip()
-
-        if not raw_text:
-            print("job_temp.txt is empty — please paste the job description and try again.")
-            exit()
-
-        job = parse_jd(raw_text=raw_text, source="manual")
+    print("\nFetching job description from URL...")
+    job = parse_jd(url=url, source="seek")
 
     print("\nFill in a few details:")
     job["company"]    = input("Company name: ").strip()
@@ -99,8 +89,9 @@ if __name__ == "__main__":
 
     insert_job(job)
 
-    # Clear the temp file after successful insert
-    open("job_temp.txt", "w").close()
+    # Clear the temp file if it exists
+    if os.path.exists("job_temp.txt"):
+        open("job_temp.txt", "w").close()
 
     print("\nCheck BigQuery — run this query:")
     print(f"SELECT * FROM `{os.getenv('GCP_PROJECT_ID')}.reachout.raw_jobs` ORDER BY ingested_at DESC LIMIT 5")
