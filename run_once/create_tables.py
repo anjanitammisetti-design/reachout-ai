@@ -50,6 +50,21 @@ schemas = {
         bigquery.SchemaField("narrative_text", "STRING"),
         bigquery.SchemaField("created_at", "TIMESTAMP"),
     ],
+    "tailored_resumes": [
+        bigquery.SchemaField("resume_id", "STRING"),
+        bigquery.SchemaField("job_id", "STRING"),
+        bigquery.SchemaField("original_resume", "STRING"),
+        bigquery.SchemaField("tailored_resume", "STRING"),
+        bigquery.SchemaField("docx_filename", "STRING"),
+        bigquery.SchemaField("created_at", "TIMESTAMP"),
+    ],
+    "interview_prep": [
+        bigquery.SchemaField("prep_id", "STRING"),
+        bigquery.SchemaField("job_id", "STRING"),
+        bigquery.SchemaField("questions", "STRING"),
+        bigquery.SchemaField("answers", "STRING"),
+        bigquery.SchemaField("created_at", "TIMESTAMP"),
+    ],
 }
 
 for table_name, schema in schemas.items():
