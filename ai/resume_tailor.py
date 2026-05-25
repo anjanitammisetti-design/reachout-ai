@@ -144,7 +144,13 @@ def build_docx(tailored: dict, job_title: str, company: str) -> str:
     """Build Word document matching Anjani's exact resume style."""
 
     doc = Document()
-
+    # Set default document font to Calibri
+    from docx.oxml.ns import qn
+    style = doc.styles['Normal']
+    style.font.name = 'Calibri'
+    style.font.size = Pt(10)
+    style.element.rPr.rFonts.set(qn('w:asciiTheme'), 'Calibri')
+    
     # Page margins
     for section in doc.sections:
         section.top_margin    = Pt(36)
@@ -157,6 +163,7 @@ def build_docx(tailored: dict, job_title: str, company: str) -> str:
         run = para.add_run(text)
         run.bold = bold
         run.font.size = Pt(size)
+        run.font.name = "Calibri"
         return run
 
     # ── Helper: add section heading with bottom border ─────
@@ -195,6 +202,9 @@ def build_docx(tailored: dict, job_title: str, company: str) -> str:
         pPr.append(numPr)
         run = p.add_run(text)
         run.font.size = Pt(size)
+        run = p.add_run(text)
+        run.font.size = Pt(size)
+        run.font.name = "Calibri"
         return p
 
     # ── Name ──────────────────────────────────────────────
@@ -218,7 +228,8 @@ def build_docx(tailored: dict, job_title: str, company: str) -> str:
     add_run(contact_p,
         "Sydney, NSW | Permanent Resident (SC 309)\n"
         "+61 422 480 664 | anjani.tammisetti@gmail.com\n"
-        "LinkedIn: https://www.linkedin.com/in/anjani-tammisetti-8ab793114/",
+        "LinkedIn: https://www.linkedin.com/in/anjani-tammisetti-8ab793114/\n"
+        "GitHub: https://github.com/anjanitammisetti-design/reachout-ai",
         bold=False, size=10)
 
     # ── 1. Professional Summary ────────────────────────────
