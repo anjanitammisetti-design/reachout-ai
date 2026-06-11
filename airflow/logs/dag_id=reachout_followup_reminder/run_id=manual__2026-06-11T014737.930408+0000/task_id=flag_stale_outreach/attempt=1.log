@@ -1,0 +1,15 @@
+[2026-06-11T01:47:39.070+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: reachout_followup_reminder.flag_stale_outreach manual__2026-06-11T01:47:37.930408+00:00 [queued]>
+[2026-06-11T01:47:39.081+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: reachout_followup_reminder.flag_stale_outreach manual__2026-06-11T01:47:37.930408+00:00 [queued]>
+[2026-06-11T01:47:39.082+0000] {taskinstance.py:2170} INFO - Starting attempt 1 of 2
+[2026-06-11T01:47:39.104+0000] {taskinstance.py:2191} INFO - Executing <Task(PythonOperator): flag_stale_outreach> on 2026-06-11 01:47:37.930408+00:00
+[2026-06-11T01:47:39.114+0000] {standard_task_runner.py:60} INFO - Started process 303 to run task
+[2026-06-11T01:47:39.119+0000] {standard_task_runner.py:87} INFO - Running: ['***', 'tasks', 'run', 'reachout_followup_reminder', 'flag_stale_outreach', 'manual__2026-06-11T01:47:37.930408+00:00', '--job-id', '12', '--raw', '--subdir', 'DAGS_FOLDER/followup_dag.py', '--cfg-path', '/tmp/tmp9v6p2alp']
+[2026-06-11T01:47:39.123+0000] {standard_task_runner.py:88} INFO - Job 12: Subtask flag_stale_outreach
+[2026-06-11T01:47:39.192+0000] {task_command.py:423} INFO - Running <TaskInstance: reachout_followup_reminder.flag_stale_outreach manual__2026-06-11T01:47:37.930408+00:00 [running]> on host 8243f90d1993
+[2026-06-11T01:47:39.280+0000] {taskinstance.py:2480} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='reachout' AIRFLOW_CTX_DAG_ID='reachout_followup_reminder' AIRFLOW_CTX_TASK_ID='flag_stale_outreach' AIRFLOW_CTX_EXECUTION_DATE='2026-06-11T01:47:37.930408+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-06-11T01:47:37.930408+00:00'
+[2026-06-11T01:47:40.072+0000] {_default.py:683} WARNING - No project ID could be determined. Consider running `gcloud config set project` or setting the GOOGLE_CLOUD_PROJECT environment variable
+[2026-06-11T01:47:43.058+0000] {logging_mixin.py:188} INFO - Stale outreach flagged successfully.
+[2026-06-11T01:47:43.059+0000] {python.py:201} INFO - Done. Returned value was: None
+[2026-06-11T01:47:43.071+0000] {taskinstance.py:1138} INFO - Marking task as SUCCESS. dag_id=reachout_followup_reminder, task_id=flag_stale_outreach, execution_date=20260611T014737, start_date=20260611T014739, end_date=20260611T014743
+[2026-06-11T01:47:43.115+0000] {local_task_job_runner.py:234} INFO - Task exited with return code 0
+[2026-06-11T01:47:43.134+0000] {taskinstance.py:3280} INFO - 1 downstream tasks scheduled from follow-on schedule check

@@ -1,0 +1,15 @@
+[2026-06-11T01:47:43.945+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: reachout_followup_reminder.draft_follow_up_messages manual__2026-06-11T01:47:37.930408+00:00 [queued]>
+[2026-06-11T01:47:43.963+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: reachout_followup_reminder.draft_follow_up_messages manual__2026-06-11T01:47:37.930408+00:00 [queued]>
+[2026-06-11T01:47:43.964+0000] {taskinstance.py:2170} INFO - Starting attempt 1 of 2
+[2026-06-11T01:47:43.985+0000] {taskinstance.py:2191} INFO - Executing <Task(PythonOperator): draft_follow_up_messages> on 2026-06-11 01:47:37.930408+00:00
+[2026-06-11T01:47:43.993+0000] {standard_task_runner.py:60} INFO - Started process 309 to run task
+[2026-06-11T01:47:43.998+0000] {standard_task_runner.py:87} INFO - Running: ['***', 'tasks', 'run', 'reachout_followup_reminder', 'draft_follow_up_messages', 'manual__2026-06-11T01:47:37.930408+00:00', '--job-id', '14', '--raw', '--subdir', 'DAGS_FOLDER/followup_dag.py', '--cfg-path', '/tmp/tmpew83e1t2']
+[2026-06-11T01:47:44.002+0000] {standard_task_runner.py:88} INFO - Job 14: Subtask draft_follow_up_messages
+[2026-06-11T01:47:44.097+0000] {task_command.py:423} INFO - Running <TaskInstance: reachout_followup_reminder.draft_follow_up_messages manual__2026-06-11T01:47:37.930408+00:00 [running]> on host 8243f90d1993
+[2026-06-11T01:47:44.205+0000] {taskinstance.py:2480} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='reachout' AIRFLOW_CTX_DAG_ID='reachout_followup_reminder' AIRFLOW_CTX_TASK_ID='draft_follow_up_messages' AIRFLOW_CTX_EXECUTION_DATE='2026-06-11T01:47:37.930408+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-06-11T01:47:37.930408+00:00'
+[2026-06-11T01:47:48.142+0000] {_default.py:683} WARNING - No project ID could be determined. Consider running `gcloud config set project` or setting the GOOGLE_CLOUD_PROJECT environment variable
+[2026-06-11T01:47:50.741+0000] {logging_mixin.py:188} INFO - No follow-ups needed today.
+[2026-06-11T01:47:50.742+0000] {python.py:201} INFO - Done. Returned value was: None
+[2026-06-11T01:47:50.759+0000] {taskinstance.py:1138} INFO - Marking task as SUCCESS. dag_id=reachout_followup_reminder, task_id=draft_follow_up_messages, execution_date=20260611T014737, start_date=20260611T014743, end_date=20260611T014750
+[2026-06-11T01:47:50.823+0000] {local_task_job_runner.py:234} INFO - Task exited with return code 0
+[2026-06-11T01:47:50.881+0000] {taskinstance.py:3280} INFO - 0 downstream tasks scheduled from follow-on schedule check
