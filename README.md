@@ -58,40 +58,34 @@ An Airflow DAG runs every morning, checks BigQuery for outreach with no reply af
 
 ## Architecture
 
-```
-Job postings (Seek / LinkedIn / company sites)
+\`\`\`
+Job postings (Seek / LinkedIn)
         │
         ▼
-  Python ingestion script
-  (parse_jd.py)
+Python ingestion (parse_jd.py)
         │
         ▼
-  BigQuery — raw_jobs table
+BigQuery — raw_jobs
         │
         ▼
-  dbt models
-  (stg_jobs → jobs_enriched)
+dbt models — stg_jobs → jobs_enriched
         │
-        ├──────────────────────────────────┐
-        ▼                                  ▼
-  Vertex AI embeddings              Gemini 1.5 Flash
-  (ATS scoring)                     (messages, narratives,
-        │                            follow-ups)
-        ▼                                  │
-  BigQuery — ats_scores             BigQuery — outreach_log
-                    │               gap_narratives
-                    └───────┬───────┘
-                            ▼
-                    Streamlit dashboard
-                    (full pipeline view)
-                            │
-                            ▼
-                    Cloud Run (deployed)
-                            │
-                    Airflow DAG (daily follow-up check)
-```
-
----
+        ├─────────────────────────────┐
+        ▼                             ▼
+Vertex AI / Gemini 2.5 Flash     Airflow DAGs
+- ATS score engine               - Daily follow-up reminders
+- Resume tailor → .docx          - Weekly job search report
+- Outreach message generator
+- Gap narrative generator
+- Interview question predictor
+        │
+        ▼
+Streamlit dashboard
+        │
+        ▼
+Cloud Run (live 24/7)
+https://reachout-app-286451874684.us-central1.run.app
+\`\`\`
 
 ## Tech stack
 
@@ -165,7 +159,7 @@ reachout-ai/
 ### 1 — Clone the repo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/reachout-ai.git
+git clone https://github.com/anjanitammisetti-design/reachout-ai.git
 cd reachout-ai
 ```
 
@@ -266,7 +260,7 @@ streamlit run app/streamlit_app.py
 
 ## Live demo
 
-🔗 [Live app on Cloud Run](YOUR_CLOUD_RUN_URL)
+🔗 [Live app on Cloud Run](https://reachout-app-286451874684.us-central1.run.app)
 
 *(Screenshot or demo GIF here)*
 
