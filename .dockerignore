@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.env
+credentials/
+outputs/
+.git/
+airflow/
+my_resume.txt
+job_temp.txt
+*.log

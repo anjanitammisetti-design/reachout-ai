@@ -30,6 +30,29 @@ st.set_page_config(
     layout="wide"
 )
 
+# ── Session state ─────────────────────────────────────────
+if "resume_text" not in st.session_state:
+    st.session_state.resume_text     = None
+if "resume_filename" not in st.session_state:
+    st.session_state.resume_filename = None
+
+# ── Resume helper ─────────────────────────────────────────
+def read_resume(uploaded_file) -> str:
+    """Read resume from txt or docx upload."""
+    if uploaded_file.name.endswith(".docx"):
+        import docx
+        doc = docx.Document(uploaded_file)
+        return "\n".join([
+            para.text for para in doc.paragraphs
+            if para.text.strip()
+        ])
+    else:
+        content = uploaded_file.read()
+        try:
+            return content.decode("utf-8")
+        except UnicodeDecodeError:
+            return content.decode("windows-1252")
+
 # ── BigQuery client ───────────────────────────────────────
 @st.cache_resource
 def get_bq_client():
@@ -95,7 +118,7 @@ def load_stats():
     return dict(rows[0]) if rows else {}
 
 
-# ── Sidebar navigation ────────────────────────────────────
+# ── Sidebar ───────────────────────────────────────────────
 st.sidebar.title("ReachOut AI")
 st.sidebar.caption("Your AI job search co-pilot")
 st.sidebar.divider()
@@ -108,61 +131,69 @@ page = st.sidebar.radio(
 )
 
 st.sidebar.divider()
+st.sidebar.markdown("**My Resume**")
+sidebar_resume = st.sidebar.file_uploader(
+    "Upload once, use everywhere",
+    type=["txt", "docx"],
+    key="sidebar_resume"
+)
+if sidebar_resume:
+    st.session_state.resume_text     = read_resume(sidebar_resume)
+    st.session_state.resume_filename = sidebar_resume.name
+    st.sidebar.success(f"✅ {sidebar_resume.name}")
+
+if st.session_state.resume_filename:
+    st.sidebar.caption(f"Loaded: {st.session_state.resume_filename}")
+
+st.sidebar.divider()
 st.sidebar.caption(f"Project: `{PROJECT}`")
 st.sidebar.caption(f"Dataset: `{DATASET}`")
 
+
 # ══════════════════════════════════════════════════════════
-# PAGE 1 — Pipeline dashboard
+# PAGE 1 — Pipeline
 # ══════════════════════════════════════════════════════════
 if page == "Pipeline":
     st.title("ReachOut AI — Job Pipeline")
 
-    # Stats row
     stats = load_stats()
     col1, col2, col3, col4, col5 = st.columns(5)
-    col1.metric("Roles tracked",    int(stats.get("total_jobs", 0)))
-    col2.metric("Outreach sent",    int(stats.get("total_outreach", 0)))
-    col3.metric("Replies",          int(stats.get("total_replied", 0)))
-    col4.metric("Follow-ups due",   int(stats.get("follow_ups_due", 0)))
-    col5.metric("Avg ATS score",    f"{stats.get('avg_ats_score') or 0}%")
+    col1.metric("Roles tracked",  int(stats.get("total_jobs", 0)))
+    col2.metric("Outreach sent",  int(stats.get("total_outreach", 0)))
+    col3.metric("Replies",        int(stats.get("total_replied", 0)))
+    col4.metric("Follow-ups due", int(stats.get("follow_ups_due", 0)))
+    col5.metric("Avg ATS score",  f"{stats.get('avg_ats_score') or 0}%")
 
     st.divider()
 
-    # Pipeline table
     df = load_pipeline()
-
     if df.empty:
         st.info("No jobs yet — go to Add Job to get started!")
     else:
         st.subheader(f"Your pipeline — {len(df)} roles")
-
         for _, row in df.iterrows():
-            ats  = int(row["ats_score"]) if row["ats_score"] else 0
+            ats    = int(row["ats_score"]) if row["ats_score"] else 0
             status = row["status"]
-
-            # Status colour
             if status == "Replied":
-                status_colour = "🟢"
+                icon = "🟢"
             elif status == "Follow-up due":
-                status_colour = "🔴"
+                icon = "🔴"
             elif status == "Outreach sent":
-                status_colour = "🔵"
+                icon = "🔵"
             else:
-                status_colour = "⚪"
+                icon = "⚪"
 
             with st.expander(
-                f"{status_colour}  **{row['company']}** — {row['title']}  "
+                f"{icon}  **{row['company']}** — {row['title']}  "
                 f"|  ATS: {ats}%  |  {status}"
             ):
                 col_a, col_b, col_c = st.columns(3)
-
                 with col_a:
                     st.markdown("**Role details**")
                     st.write(f"📍 {row['location']}")
                     st.write(f"📅 Added: {str(row['ingested_at'])[:10]}")
                     if row["url"]:
                         st.markdown(f"[View job posting ↗]({row['url']})")
-
                 with col_b:
                     st.markdown("**ATS score**")
                     st.progress(ats / 100)
@@ -173,7 +204,6 @@ if page == "Pipeline":
                             st.caption(f"Missing: {', '.join(missing[:5])}")
                         except:
                             st.caption(f"Missing: {row['missing_keywords']}")
-
                 with col_c:
                     st.markdown("**Outreach**")
                     if pd.notna(row.get("sent_at")):
@@ -187,6 +217,7 @@ if page == "Pipeline":
                     else:
                         st.write("Not contacted yet")
 
+
 # ══════════════════════════════════════════════════════════
 # PAGE 2 — Add Job
 # ══════════════════════════════════════════════════════════
@@ -194,10 +225,10 @@ elif page == "Add Job":
     st.title("➕ Add Job")
     st.caption("Paste a Seek or LinkedIn job URL to add it to your pipeline")
 
-    url     = st.text_input("Job URL")
-    company = st.text_input("Company name")
+    url      = st.text_input("Job URL")
+    company  = st.text_input("Company name")
     location = st.text_input("Location (e.g. Sydney, NSW)")
-    salary  = st.text_input("Salary (optional)")
+    salary   = st.text_input("Salary (optional)")
 
     if st.button("Add Job to Pipeline", type="primary"):
         if not url or not company:
@@ -206,17 +237,18 @@ elif page == "Add Job":
             with st.spinner("Fetching job description..."):
                 try:
                     from ingestion.parse_jd import parse_jd, insert_job
-                    job = parse_jd(url=url, source="seek")
+                    job               = parse_jd(url=url, source="seek")
                     job["company"]    = company
                     job["location"]   = location
                     job["salary_raw"] = salary
-                    job_id = insert_job(job)
+                    job_id            = insert_job(job)
                     st.success(f"Job added! ID: `{job_id[:8]}...`")
                     st.balloons()
                     load_pipeline.clear()
                     load_stats.clear()
                 except Exception as e:
                     st.error(f"Error: {e}")
+
 
 # ══════════════════════════════════════════════════════════
 # PAGE 3 — Score Resume
@@ -225,54 +257,60 @@ elif page == "Score Resume":
     st.title("📊 Score Resume")
     st.caption("Compare your resume against a job description")
 
-    df = load_pipeline()
-    if df.empty:
-        st.info("Add jobs first from the Add Job page")
+    if not st.session_state.resume_text:
+        st.warning("Please upload your resume in the sidebar first")
     else:
-        options = {
-            f"{row['company']} — {row['title']}": row["job_id"]
-            for _, row in df.iterrows()
-        }
-        selected = st.selectbox("Select a job to score against", list(options.keys()))
+        st.success(f"Resume loaded: {st.session_state.resume_filename}")
+        df = load_pipeline()
+        if df.empty:
+            st.info("Add jobs first from the Add Job page")
+        else:
+            options  = {
+                f"{row['company']} — {row['title']}": row["job_id"]
+                for _, row in df.iterrows()
+            }
+            selected = st.selectbox("Select a job to score against", list(options.keys()))
 
-        if st.button("Score My Resume", type="primary"):
-            job_id = options[selected]
-            with st.spinner("Analysing with Gemini... (10-15 seconds)"):
-                try:
-                    from ai.ats_scorer import fetch_jd, score_resume, save_score, load_resume
-                    job    = fetch_jd(job_id)
-                    resume = load_resume()
-                    result = score_resume(job["description_raw"], resume)
+            if st.button("Score My Resume", type="primary"):
+                job_id = options[selected]
+                with st.spinner("Analysing with Gemini... (10-15 seconds)"):
+                    try:
+                        from ai.ats_scorer import fetch_jd, score_resume, save_score
+                        job    = fetch_jd(job_id)
+                        result = score_resume(
+                            job["description_raw"],
+                            st.session_state.resume_text
+                        )
 
-                    # Display results
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Match Score", f"{result['match_score']}%")
-                        st.progress(result["match_score"] / 100)
-                    with col2:
-                        st.write(result["summary"])
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.metric("Match Score", f"{result['match_score']}%")
+                            st.progress(result["match_score"] / 100)
+                        with col2:
+                            st.write(result["summary"])
 
-                    col3, col4 = st.columns(2)
-                    with col3:
-                        st.markdown("**✅ Matched keywords**")
-                        for kw in result.get("matched_keywords", []):
-                            st.write(f"- {kw}")
-                    with col4:
-                        st.markdown("**❌ Missing keywords**")
-                        for kw in result.get("missing_keywords", []):
-                            st.write(f"- {kw}")
+                        col3, col4 = st.columns(2)
+                        with col3:
+                            st.markdown("**✅ Matched keywords**")
+                            for kw in result.get("matched_keywords", []):
+                                st.write(f"- {kw}")
+                        with col4:
+                            st.markdown("**❌ Missing keywords**")
+                            for kw in result.get("missing_keywords", []):
+                                st.write(f"- {kw}")
 
-                    st.markdown("**💡 Suggestions**")
-                    for s in result.get("suggestions", []):
-                        st.write(f"- {s}")
+                        st.markdown("**💡 Suggestions**")
+                        for s in result.get("suggestions", []):
+                            st.write(f"- {s}")
 
-                    save_score(job_id, result)
-                    st.success("Score saved to BigQuery!")
-                    load_pipeline.clear()
-                    load_stats.clear()
+                        save_score(job_id, result)
+                        st.success("Score saved to BigQuery!")
+                        load_pipeline.clear()
+                        load_stats.clear()
 
-                except Exception as e:
-                    st.error(f"Error: {e}")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+
 
 # ══════════════════════════════════════════════════════════
 # PAGE 4 — Tailor Resume
@@ -281,48 +319,58 @@ elif page == "Tailor Resume":
     st.title("📝 Tailor Resume")
     st.caption("Gemini rewrites your resume for the specific role")
 
-    df = load_pipeline()
-    if df.empty:
-        st.info("Add jobs first from the Add Job page")
+    if not st.session_state.resume_text:
+        st.warning("Please upload your resume in the sidebar first")
     else:
-        options = {
-            f"{row['company']} — {row['title']}": row["job_id"]
-            for _, row in df.iterrows()
-        }
-        selected = st.selectbox("Select a job", list(options.keys()))
+        st.success(f"Resume loaded: {st.session_state.resume_filename}")
+        df = load_pipeline()
+        if df.empty:
+            st.info("Add jobs first from the Add Job page")
+        else:
+            options  = {
+                f"{row['company']} — {row['title']}": row["job_id"]
+                for _, row in df.iterrows()
+            }
+            selected = st.selectbox("Select a job", list(options.keys()))
 
-        if st.button("Tailor My Resume", type="primary"):
-            job_id = options[selected]
-            with st.spinner("Tailoring with Gemini... (15-20 seconds)"):
-                try:
-                    from ai.resume_tailor import (
-                        fetch_jd, get_tailored_content,
-                        build_docx, save_to_bigquery, load_resume_text
-                    )
-                    job      = fetch_jd(job_id)
-                    resume   = load_resume_text()
-                    tailored = get_tailored_content(
-                        resume, job["description_raw"],
-                        job["title"], job["company"]
-                    )
-                    filename = build_docx(
-                        tailored, job["title"], job["company"]
-                    )
-                    save_to_bigquery(job_id, resume, tailored, filename)
-
-                    st.success("Resume tailored successfully!")
-                    st.write(f"Keywords added: {', '.join(tailored.get('keywords_added', []))}")
-
-                    # Download button
-                    with open(filename, "rb") as f:
-                        st.download_button(
-                            label="📥 Download Tailored Resume",
-                            data=f,
-                            file_name=filename.split("/")[-1],
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            if st.button("Tailor My Resume", type="primary"):
+                job_id = options[selected]
+                with st.spinner("Tailoring with Gemini... (15-20 seconds)"):
+                    try:
+                        from ai.resume_tailor import (
+                            fetch_jd, get_tailored_content,
+                            build_docx, save_to_bigquery
                         )
-                except Exception as e:
-                    st.error(f"Error: {e}")
+                        job      = fetch_jd(job_id)
+                        tailored = get_tailored_content(
+                            st.session_state.resume_text,
+                            job["description_raw"],
+                            job["title"],
+                            job["company"]
+                        )
+                        filename = build_docx(
+                            tailored, job["title"], job["company"]
+                        )
+                        save_to_bigquery(
+                            job_id,
+                            st.session_state.resume_text,
+                            tailored,
+                            filename
+                        )
+
+                        st.success("Resume tailored successfully!")
+                        st.write(f"Keywords added: {', '.join(tailored.get('keywords_added', []))}")
+
+                        with open(filename, "rb") as f:
+                            st.download_button(
+                                label="📥 Download Tailored Resume",
+                                data=f,
+                                file_name=filename.split("/")[-1],
+                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            )
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+
 
 # ══════════════════════════════════════════════════════════
 # PAGE 5 — Find Email
@@ -341,10 +389,11 @@ elif page == "Find Email":
         else:
             with st.spinner("Searching Hunter.io..."):
                 try:
-                    from ai.email_finder import find_domain, find_email, guess_email_patterns
+                    from ai.email_finder import (
+                        find_domain, find_email, guess_email_patterns
+                    )
                     domain = find_domain(company)
                     st.write(f"Domain found: `{domain}`")
-
                     result = find_email(first_name, last_name, domain)
 
                     if result["email"]:
@@ -363,6 +412,7 @@ elif page == "Find Email":
                 except Exception as e:
                     st.error(f"Error: {e}")
 
+
 # ══════════════════════════════════════════════════════════
 # PAGE 6 — Generate Message
 # ══════════════════════════════════════════════════════════
@@ -374,7 +424,7 @@ elif page == "Generate Message":
     if df.empty:
         st.info("Add jobs first from the Add Job page")
     else:
-        options = {
+        options      = {
             f"{row['company']} — {row['title']}": row["job_id"]
             for _, row in df.iterrows()
         }
@@ -417,6 +467,7 @@ elif page == "Generate Message":
                     except Exception as e:
                         st.error(f"Error: {e}")
 
+
 # ══════════════════════════════════════════════════════════
 # PAGE 7 — Interview Prep
 # ══════════════════════════════════════════════════════════
@@ -428,7 +479,7 @@ elif page == "Interview Prep":
     if df.empty:
         st.info("Add jobs first from the Add Job page")
     else:
-        options = {
+        options  = {
             f"{row['company']} — {row['title']}": row["job_id"]
             for _, row in df.iterrows()
         }
@@ -449,16 +500,13 @@ elif page == "Interview Prep":
                         job["company"]
                     )
 
-                    # Gap answer
                     st.markdown("### 💬 Gap answer")
                     st.info(prep.get("gap_answer", ""))
 
-                    # Key talking points
                     st.markdown("### 📌 Key talking points")
                     for point in prep.get("key_talking_points", []):
                         st.write(f"- {point}")
 
-                    # Technical questions
                     st.markdown("### 🔧 Technical questions")
                     for i, q in enumerate(
                         prep.get("technical_questions", []), 1
@@ -467,7 +515,6 @@ elif page == "Interview Prep":
                             st.caption(f"Why asked: {q['why_asked']}")
                             st.write(q["suggested_answer"])
 
-                    # Behavioural questions
                     st.markdown("### 🤝 Behavioural questions")
                     for i, q in enumerate(
                         prep.get("behavioural_questions", []), 1
@@ -476,7 +523,6 @@ elif page == "Interview Prep":
                             st.caption(f"Why asked: {q['why_asked']}")
                             st.write(q["suggested_answer"])
 
-                    # Questions to ask
                     st.markdown("### ❓ Questions to ask them")
                     for q in prep.get("questions_to_ask_them", []):
                         st.write(f"- {q}")
